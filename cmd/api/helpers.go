@@ -27,9 +27,14 @@ func (app *application) readIDParam(r *http.Request) (int64, error) {
 	return id, nil
 }
 
+// envelop is custom type, defined to wrap data under (common) top-level key name
+type envelope map[string]interface{}
+
 // Reuseable logic to form JSON response
-func (app *application) writeJSON(w http.ResponseWriter, code int, data interface{}, headers http.Header) error {
-	js, err := json.Marshal(data) // encode provided data to json
+func (app *application) writeJSON(w http.ResponseWriter, code int, data envelope, headers http.Header) error {
+	// encode provided data to json Marshal(), with indentation MarshalIndent()
+	// MarshalIndent() is much more slower that Marshl()
+	js, err := json.MarshalIndent(data, "", "\t")
 	if err != nil {
 		return err
 	}

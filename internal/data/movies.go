@@ -11,7 +11,7 @@ type Movie struct {
 	CreatedAt time.Time `json:"-"` // - (hyphen) copletly hide this field (ex. I don't want to show this field to end user)
 	Title     string    `json:"title"`
 	Year      int32     `json:"year,omitempty"` // omitempty hides field if it has its zero value
-	Runtime   int32     `json:"runtime,omitempty"`
+	Runtime   Runtime   `json:"runtime,omitempty"`
 	Genres    []string  `json:"genres,omitempty"`
 	Version   int32     `json:"version"`
 }

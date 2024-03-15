@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -9,7 +10,25 @@ import (
 )
 
 func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "createMoview Handler")
+	// Destination struct. Fields must be exported (start with capital letter)
+	// so they are visible to the encoding/json package
+	var input struct {
+		Title   string   `json:"title"`
+		Year    int32    `json:"year"`
+		Runtime int32    `json:"runtime"`
+		Genres  []string `json:"genres"`
+	}
+
+	// No need to close r.Body in this case.
+	// This will be done automaticaly by Go's http.Server.
+	dec := json.NewDecoder(r.Body)
+	err := dec.Decode(&input)
+	if err != nil {
+		app.errorResponce(w, r, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	fmt.Fprintf(w, "%+v\n", input)
 }
 
 func (app *application) showMovieHandler(w http.ResponseWriter, r *http.Request) {

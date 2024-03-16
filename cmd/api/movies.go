@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -19,12 +18,9 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 		Genres  []string `json:"genres"`
 	}
 
-	// No need to close r.Body in this case.
-	// This will be done automaticaly by Go's http.Server.
-	dec := json.NewDecoder(r.Body)
-	err := dec.Decode(&input)
+	err := app.readJSON(w, r, &input)
 	if err != nil {
-		app.errorResponce(w, r, http.StatusBadRequest, err.Error())
+		app.badRequestResponce(w, r, err)
 		return
 	}
 

@@ -12,10 +12,10 @@ func (app *application) createMovieHandler(w http.ResponseWriter, r *http.Reques
 	// Destination struct. Fields must be exported (start with capital letter)
 	// so they are visible to the encoding/json package
 	var input struct {
-		Title   string   `json:"title"`
-		Year    int32    `json:"year"`
-		Runtime int32    `json:"runtime"`
-		Genres  []string `json:"genres"`
+		Title   string       `json:"title"`
+		Year    int32        `json:"year"`
+		Runtime data.Runtime `json:"runtime"`
+		Genres  []string     `json:"genres"`
 	}
 
 	err := app.readJSON(w, r, &input)

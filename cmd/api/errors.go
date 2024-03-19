@@ -6,12 +6,13 @@ import (
 )
 
 // Errors logic for whole main package.
-// Methods that form output in console and JSON response
 
+// Mehod that form outputs error in console
 func (app *application) logError(r *http.Request, err error) {
 	app.logger.Println(err)
 }
 
+// Method that output errors in JSON
 func (app *application) errorResponce(w http.ResponseWriter, r *http.Request, code int, message interface{}) {
 	env := envelope{"error": message}
 	err := app.writeJSON(w, code, env, nil)
@@ -20,6 +21,8 @@ func (app *application) errorResponce(w http.ResponseWriter, r *http.Request, co
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 }
+
+// Below are methods, whose names correspond to specific error case
 
 func (app *application) serverErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
 	app.logError(r, err)
@@ -39,4 +42,8 @@ func (app *application) methodNotAllowedResponse(w http.ResponseWriter, r *http.
 
 func (app *application) badRequestResponce(w http.ResponseWriter, r *http.Request, err error) {
 	app.errorResponce(w, r, http.StatusBadRequest, err.Error())
+}
+
+func (app *application) failedValidationResponse(w http.ResponseWriter, r *http.Request, errors map[string]string) {
+	app.errorResponce(w, r, http.StatusUnprocessableEntity, errors)
 }

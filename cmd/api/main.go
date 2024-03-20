@@ -20,7 +20,10 @@ type config struct {
 	port int
 	env  string
 	db   struct {
-		dsn string
+		dsn          string
+		maxOpenConns int
+		maxIdleConns int
+		maxIdleTime  string
 	}
 }
 
@@ -38,6 +41,10 @@ func main() {
 	flag.StringVar(&cfg.env, "env", "development", "Environment (development|staging|production)")
 	// Postgres options: User: greenlight, DB: greenlight, password: pa55word, ssl disabled
 	flag.StringVar(&cfg.db.dsn, "db-dsn", "postgres://greenlight:pa55word@localhost/greenlight?sslmode=disable", "PostgreSQL DSN")
+	// Flags to specify SQL connection pool options
+	flag.IntVar(&cfg.db.maxOpenConns, "db-max-open-conns", 25, "PostgreSQL max open connections")
+	flag.IntVar(&cfg.db.maxIdleConns, "db-mux-idle-conns", 25, "PostgreSQL max idle connections")
+	flag.StringVar(&cfg.db.maxIdleTime, "db-mux-idle-time", "15m", "PostgreSQL max connection idle time")
 	flag.Parse() // Must be called affter all fags are defined
 
 	logger := log.New(os.Stdout, "", log.Ldate|log.Ltime) // *log.Logger
@@ -77,6 +84,16 @@ func openDB(cfg config) (*sql.DB, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Set custom options (from flags) to the connection pool
+	db.SetMaxOpenConns(cfg.db.maxOpenConns)
+	db.SetMaxIdleConns(cfg.db.maxIdleConns)
+
+	duration, err := time.ParseDuration(cfg.db.maxIdleTime)
+	if err != nil {
+		return nil, err
+	}
+	db.SetConnMaxIdleTime(duration)
 
 	// Here I check if connection is establiched. If connection couldn't be
 	// establiched successfully within 5 second - return an error

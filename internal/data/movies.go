@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/lib/pq"
+
 	"github.com/phoenixixixix/greenlight/internal/validator"
 )
 
@@ -44,7 +46,18 @@ type MovieModel struct {
 }
 
 func (m MovieModel) Insert(movie *Movie) error {
-	return nil
+	query := `
+  INSERT INTO movies(title, year, runtime, genres)
+  VALUES ($1, $2, $3, $4)
+  RETURNING id, created_at, version`
+
+	// It's optional to daclare this slice but it makes nice and clear what values
+	// should be in placeholders
+	args := []interface{}{movie.Title, movie.Year, movie.Runtime, pq.Array(movie.Genres)}
+
+	// retrurning error from Scan if any and simultaneously Scan populates system-generated
+	// field in passed movie object
+	return m.DB.QueryRow(query, args...).Scan(&movie.ID, &movie.CreatedAt, &movie.Version)
 }
 
 func (m MovieModel) Get(movie *Movie) (*Movie, error) {

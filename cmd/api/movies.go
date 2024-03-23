@@ -1,9 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/phoenixixixix/greenlight/internal/data"
 	"github.com/phoenixixixix/greenlight/internal/validator"
@@ -64,13 +64,15 @@ func (app *application) showMovieHandler(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	movie := data.Movie{
-		ID:        id,
-		CreatedAt: time.Now(),
-		Title:     "Dune",
-		Runtime:   148,
-		Genres:    []string{"action", "mistery"},
-		Version:   1,
+	movie, err := app.models.Movies.Get(id)
+	if errors.Is(err, data.ErrRecordNotFound) {
+		switch {
+		case errors.Is(err, data.ErrRecordNotFound):
+			app.notFoundResponse(w, r)
+		default:
+			app.serverErrorResponse(w, r, err)
+		}
+		return
 	}
 
 	// envelop is custom type, defined to envelop data under top-level key name

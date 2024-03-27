@@ -90,6 +90,7 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	// Get requested movie with all its data to imitate partial update
 	movie, err := app.models.Movies.Get(id)
 	if errors.Is(err, data.ErrRecordNotFound) {
 		switch {
@@ -102,11 +103,14 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 	}
 
 	// Declare data struct where I can unpack data from JSON input
+	// Use pointers to support partial update. This way i can distinguish
+	// nil (pointer zero value) when user doesn't provide field and empty string
+	// when user actually provided empty string, which isn't valid.
 	var input struct {
-		Title   string       `json:"title"`
-		Year    int32        `json:"year"`
-		Runtime data.Runtime `json:"runtime"`
-		Genres  []string     `json:"genres"`
+		Title   *string       `json:"title"`
+		Year    *int32        `json:"year"`
+		Runtime *data.Runtime `json:"runtime"`
+		Genres  []string      `json:"genres"`
 	}
 
 	err = app.readJSON(w, r, &input)
@@ -115,11 +119,21 @@ func (app *application) updateMovieHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Populate field to retreived movie
-	movie.Title = input.Title
-	movie.Year = input.Year
-	movie.Runtime = input.Runtime
-	movie.Genres = input.Genres
+	// Populate fields to retreived movie
+	// Check each field in input if it's provided (partial update support)
+	// if not - we don't update the field.
+	if input.Title != nil {
+		movie.Title = *input.Title
+	}
+	if input.Year != nil {
+		movie.Year = *input.Year
+	}
+	if input.Runtime != nil {
+		movie.Runtime = *input.Runtime
+	}
+	if input.Genres != nil {
+		movie.Genres = input.Genres
+	}
 
 	// Run validations against newly populated fields
 	v := validator.New()
